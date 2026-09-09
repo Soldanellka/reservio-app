@@ -1,3 +1,5 @@
+import "./globals.css";
+
 export const metadata = {
   title: "Reservio – Rezervačný systém",
   description: "Univerzálny rezervačný systém pre každého"
