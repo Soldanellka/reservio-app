@@ -1,4 +1,7 @@
 /* 🌸 Reservio – základný štýl */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 :root {
   --bg: #f7f4fb;
   --card: #ffffff;
