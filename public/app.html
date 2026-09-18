@@ -1,0 +1,1228 @@
+<!doctype html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reservio – Rezervačný systém</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0EC; --surface:#FFFFFF; --surface-2:#F5F7F4; --ink:#1E2A2C; --muted:#5D6A6C; --line:#D3DAD4;
+  --accent:#6B2D5C; --accent-ink:#FFFFFF; --accent-soft:#F2E4EE; --ok:#2A7F62; --warn:#B23A48;
+  --hatch:repeating-linear-gradient(135deg,#E2E7E2 0 6px,#EEF1ED 6px 12px);
+  --font-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --font:'Instrument Sans','Segoe UI',system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#141B1C; --surface:#1C2526; --surface-2:#222C2D; --ink:#E6EBE9; --muted:#9AA7A7; --line:#334041;
+    --accent:#D591C2; --accent-ink:#1B1016; --accent-soft:#3A2733; --ok:#6BC4A2; --warn:#F08A96;
+    --hatch:repeating-linear-gradient(135deg,#222C2D 0 6px,#1A2223 6px 12px); }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0 0 .4em}
+h1{font-size:clamp(28px,4vw,40px)} h2{font-size:22px} h3{font-size:17px}
+p{margin:0 0 .8em}
+a{color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:13px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px clamp(16px,4vw,40px);background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.brand{font-family:var(--font-display);font-weight:700;font-size:22px;letter-spacing:-.03em;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:9px}
+.mark{width:22px;height:22px;border-radius:6px;background:var(--accent);position:relative}
+.mark::after{content:"";position:absolute;left:5px;right:5px;top:10px;height:2px;background:var(--accent-ink);border-radius:2px}
+.top nav{display:flex;gap:4px;flex-wrap:wrap}
+.top nav a{padding:8px 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-weight:500}
+.top nav a.on{background:var(--accent-soft);color:var(--accent)}
+.badge{display:inline-block;background:var(--accent);color:var(--accent-ink);border-radius:99px;font-size:12px;line-height:18px;padding:0 7px;margin-left:6px;font-weight:600}
+
+.wrap{max-width:1080px;margin:0 auto;padding:28px clamp(16px,4vw,40px) 72px}
+.wrap.wide{max-width:1400px}
+
+/* controls */
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600;font-size:14px;line-height:1;padding:10px 14px;border-radius:10px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.danger{color:var(--warn)}
+.btn.lg{padding:14px 20px;font-size:15px}
+.btn.sm{padding:7px 10px;font-size:13px}
+.btn.icon{padding:8px 11px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.field{display:grid;gap:4px;min-width:0}
+.lbl{font-size:13px;color:var(--muted);font-weight:500}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--accent)}
+textarea{resize:vertical;min-height:64px}
+.chk{display:inline-flex;gap:8px;align-items:center;cursor:pointer}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.sp{flex:1}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px}
+.panel + .panel{margin-top:16px}
+.hint{font-size:13px;color:var(--muted);margin-top:6px}
+
+/* home */
+.hero{padding:32px 0 28px;max-width:720px}
+.hero h1{font-size:clamp(34px,5.4vw,58px);line-height:1.02;letter-spacing:-.035em}
+.hero .lead{font-size:18px;color:var(--muted);max-width:60ch;margin:16px 0 24px}
+.home-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+@media(max-width:820px){.home-grid{grid-template-columns:1fr}}
+.agenda{list-style:none;margin:0;padding:0}
+.agenda li{display:grid;grid-template-columns:62px 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.agenda li:first-child{border-top:0}
+.agenda .tm{font-weight:600;font-variant-numeric:tabular-nums}
+.agenda .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.facts{margin:0;padding-left:18px;color:var(--muted)} .facts li{margin:6px 0}
+
+/* client booking */
+.book{display:grid;grid-template-columns:270px 1fr;gap:28px;align-items:start}
+@media(max-width:820px){.book{grid-template-columns:1fr;gap:16px}}
+.biz{margin-bottom:14px}
+.biz b{font-family:var(--font-display);font-size:20px;display:block}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+@media(max-width:820px){.steps{grid-auto-flow:column;grid-auto-columns:max-content;overflow-x:auto}}
+.steps button{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:none;border:0;padding:8px 10px;border-radius:10px;cursor:pointer}
+.steps button[disabled]{cursor:default}
+.steps .n{flex:0 0 24px;height:24px;border-radius:99px;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:600;color:var(--muted)}
+.steps .on .n{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.steps .past .n{background:var(--accent-soft);border-color:var(--accent-soft);color:var(--accent)}
+.steps .past button:hover{background:var(--surface)}
+.steps .sl{display:block;font-weight:600}
+.steps li:not(.on):not(.past) .sl{color:var(--muted)}
+.steps .sv{display:block;font-size:13px;color:var(--muted)}
+.list{display:grid;gap:10px}
+.choice{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer}
+.choice:hover{border-color:var(--accent)}
+.choice .bar{width:5px;align-self:stretch;border-radius:4px;flex:0 0 5px}
+.choice .main{flex:1;min-width:0}
+.choice .main b{display:block;font-size:16px}
+.choice .meta{text-align:right;white-space:nowrap}
+.choice .meta b{display:block}
+.days{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x proximity}
+.day{flex:0 0 72px;scroll-snap-align:start;border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center;background:var(--surface);cursor:pointer;line-height:1.2}
+.day b{display:block;font-family:var(--font-display);font-size:22px;margin:2px 0}
+.day small{display:block;font-size:11px;color:var(--muted)}
+.day.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day.on small{color:inherit;opacity:.85}
+.day[disabled]{opacity:.4;cursor:not-allowed}
+.slot-group{margin-top:18px}
+.slot-group h3{font-size:14px;font-family:var(--font);font-weight:600;color:var(--muted);margin-bottom:8px}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.slot{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 6px;font-weight:600;font-variant-numeric:tabular-nums;cursor:pointer;line-height:1.2}
+.slot:hover{border-color:var(--accent);color:var(--accent)}
+.slot small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.recap{background:var(--surface-2);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.empty{padding:28px;text-align:center}
+
+/* the appointment card */
+.ticket{display:grid;grid-template-columns:1fr 150px;background:var(--surface);border:1px solid var(--line);border-radius:20px;max-width:600px;margin:8px 0 20px;overflow:hidden}
+.ticket-main{padding:26px 26px 22px}
+.ticket-main dl{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:14px 0 0}
+.ticket-main dt{color:var(--muted);font-size:13px}
+.ticket-main dd{margin:0;font-weight:500}
+.ticket-stub{position:relative;border-left:2px dashed var(--line);display:grid;place-content:center;text-align:center;padding:20px 10px;background:var(--accent-soft);color:var(--accent)}
+.ticket-stub::before,.ticket-stub::after{content:"";position:absolute;left:-12px;width:22px;height:22px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+.ticket-stub::before{top:-12px} .ticket-stub::after{bottom:-12px}
+.ticket-stub .big{font-family:var(--font-display);font-size:42px;line-height:1;font-weight:700;letter-spacing:-.03em}
+.ticket-stub .dt{font-weight:600;margin-top:6px}
+@media(max-width:520px){.ticket{grid-template-columns:1fr}.ticket-stub{border-left:0;border-top:2px dashed var(--line)}.ticket-stub::before,.ticket-stub::after{display:none}}
+
+/* admin */
+.admin{display:grid;grid-template-columns:210px 1fr;gap:28px;align-items:start}
+.side{display:grid;gap:2px;position:sticky;top:76px}
+.side a{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:10px;color:var(--ink);text-decoration:none;font-weight:500}
+.side a:hover{background:var(--surface)}
+.side a.on{background:var(--accent-soft);color:var(--accent)}
+.side-foot{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+@media(max-width:900px){.admin{grid-template-columns:1fr;gap:16px}.side{position:static;display:flex;overflow-x:auto}.side a{white-space:nowrap}.side-foot{margin:0;padding:0;border:0}}
+.admin-main{min-width:0}
+.page-head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.page-head h1{margin:0;font-size:32px}
+
+.tb{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.tb select,.tb input{width:auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:9px 14px;cursor:pointer;font-weight:600;font-size:14px}
+.seg button.on{background:var(--ink);color:var(--surface)}
+.cal-label{margin:0;font-size:17px}
+.cal-label b{font-family:var(--font-display);font-size:20px;margin-right:8px}
+.cal{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.cal-scroll{overflow-x:auto}
+.cal-grid{display:grid}
+.ch{padding:10px 8px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:3;min-width:0}
+.ch b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch span{font-size:12px;color:var(--muted)}
+.ch.go{cursor:pointer} .ch.go:hover b{color:var(--accent)}
+.ch.today b{color:var(--accent)}
+.lanes{display:flex;gap:2px;margin-top:4px}
+.lanes span{flex:1;min-width:0;font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;background:var(--surface-2);border-radius:4px}
+.gh{border-bottom:1px solid var(--line)}
+.gutter{position:relative}
+.gutter span{position:absolute;right:8px;transform:translateY(-50%);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.gutter span:first-child{transform:none}
+.col{position:relative;border-left:1px solid var(--line);cursor:cell;background-image:linear-gradient(var(--line) 1px,transparent 1px)}
+.shade{position:absolute;left:0;right:0;background:var(--hatch);pointer-events:none}
+.shade span{position:absolute;left:8px;top:4px;font-size:11.5px;color:var(--muted)}
+.ev{position:absolute;border:0;border-left:4px solid var(--c);background:color-mix(in srgb,var(--c) 15%,var(--surface));border-radius:8px;padding:3px 7px;text-align:left;overflow:hidden;cursor:pointer;font-size:12.5px;line-height:1.28;z-index:2;display:block}
+.ev:hover{background:color-mix(in srgb,var(--c) 26%,var(--surface))}
+.ev .t{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .c{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.buf{position:absolute;border-left:4px dotted var(--line);pointer-events:none;z-index:1}
+.blk{position:absolute;border:1px dashed var(--muted);background:var(--hatch);border-radius:8px;padding:3px 7px;font-size:12px;color:var(--muted);cursor:pointer;overflow:hidden;z-index:2;text-align:left;line-height:1.28}
+.now{position:absolute;left:0;right:0;height:2px;background:var(--warn);pointer-events:none;z-index:4}
+.now::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--warn)}
+
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:13px;color:var(--muted);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+.tbl td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl tr.click{cursor:pointer} .tbl tr.click:hover td{background:var(--surface-2)}
+.tbl .tn{font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll-x{overflow-x:auto}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.ok{background:color-mix(in srgb,var(--ok) 16%,var(--surface));color:var(--ok)}
+.pill.no{background:color-mix(in srgb,var(--warn) 14%,var(--surface));color:var(--warn)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:baseline}
+
+.svc-list{display:grid;gap:10px}
+.svc{display:grid;grid-template-columns:5px 1fr auto;gap:16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px 14px 14px}
+.svc .bar{align-self:stretch;border-radius:4px}
+.svc b{font-size:16px}
+
+.wk-row{display:grid;grid-template-columns:140px 220px 1fr;gap:12px;align-items:start;padding:12px 0;border-top:1px solid var(--line)}
+.wk-row:first-of-type{border-top:0}
+.wk-row .times{display:flex;gap:6px;align-items:center}
+.wk-row input[type=time]{width:auto}
+.brks{display:grid;gap:6px;justify-items:start}
+.brk{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.brk input[type=text]{width:120px}
+.wk-row.closed .times{opacity:.4}
+@media(max-width:760px){.wk-row{grid-template-columns:1fr}}
+
+.loc-card .rooms{display:grid;gap:8px;margin:10px 0}
+.loc-card .room{display:flex;gap:8px}
+
+.inbox{list-style:none;margin:0;padding:0}
+.inbox li{padding:14px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:10px 1fr;gap:12px}
+.inbox li:first-child{border-top:0}
+.inbox .dot{width:8px;height:8px;border-radius:50%;margin-top:7px;background:transparent}
+.inbox li.unread .dot{background:var(--accent)}
+.inbox pre{white-space:pre-wrap;font:inherit;font-size:14px;color:var(--muted);margin:4px 0 0}
+.set-row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.set-row:first-of-type{border-top:0}
+.set-row input[type=time],.set-row select{width:auto}
+
+/* modal */
+#modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px}
+#modal[hidden]{display:none}
+.modal-back{position:absolute;inset:0;background:rgba(20,27,28,.45)}
+.modal-card{position:relative;background:var(--surface);border-radius:20px;width:min(640px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.mhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.mhead h2{margin:0}
+.mform{display:grid;gap:12px}
+.mfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.check{margin:0;font-size:14px;padding:9px 12px;border-radius:8px}
+.check.ok{background:color-mix(in srgb,var(--ok) 12%,var(--surface));color:var(--ok)}
+.check.err{background:color-mix(in srgb,var(--warn) 12%,var(--surface));color:var(--warn)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 11px;font-size:13px;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.swatches label{width:30px;height:30px;border-radius:8px;cursor:pointer;display:grid;place-items:center}
+.swatches input{position:absolute;opacity:0;width:1px;height:1px}
+.swatches input:checked + span{width:12px;height:12px;border-radius:50%;background:#fff}
+.swatches input:focus-visible + span{outline:2px solid #fff}
+fieldset{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0}
+legend{font-size:13px;color:var(--muted);padding:0 4px}
+
+#toasts{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:grid;gap:8px;z-index:60;width:max-content;max-width:calc(100vw - 32px)}
+.toast{background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;font-weight:500;font-size:14px;animation:tin .2s ease-out}
+.toast.err{background:var(--warn);color:#fff}
+@keyframes tin{from{opacity:0;transform:translateY(6px)}}
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#/"><span class="mark" aria-hidden="true"></span>Reservio</a>
+  <nav aria-label="Hlavná navigácia">
+    <a href="#/rezervacia" data-nav="rezervacia">Rezervovať termín</a>
+    <a href="#/admin" data-nav="admin">Pre zadávateľa<span class="badge" id="navBadge" hidden></span></a>
+  </nav>
+</header>
+<main id="app"></main>
+<div id="modal" hidden></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   Reservio – univerzálny rezervačný systém
+   Dáta sú v localStorage (kľúč reservio.v1). Vrstva "Store" je
+   oddelená, aby sa dala neskôr vymeniť za server/databázu.
+   ============================================================ */
+const KEY = 'reservio.v1';
+const PXM = 1.25; // px na minútu v kalendári
+const COLORS = ['#6B2D5C','#2A7F62','#C0692C','#3A5BA0','#B23A48','#6E7D22','#1F7A8C','#8C5A2B'];
+const DAYS = ['Pondelok','Utorok','Streda','Štvrtok','Piatok','Sobota','Nedeľa'];
+
+/* ---------- pomocné funkcie ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const pad = n => String(n).padStart(2, '0');
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const m2t = m => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+const t2m = s => { const [h, mm] = String(s || '0:0').split(':').map(Number); return (h || 0) * 60 + (mm || 0); };
+const dk = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const pd = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (k, n) => { const d = pd(k); d.setDate(d.getDate() + n); return dk(d); };
+const wd = k => (pd(k).getDay() + 6) % 7; // pondelok = 0
+const today = () => dk(new Date());
+const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+const cap1 = s => s.charAt(0).toUpperCase() + s.slice(1);
+const fmtDate = k => cap1(pd(k).toLocaleDateString('sk-SK', {weekday:'short', day:'numeric', month:'numeric'}));
+const fmtLong = k => cap1(pd(k).toLocaleDateString('sk-SK', {weekday:'long', day:'numeric', month:'long'}));
+const fmtDow = k => cap1(pd(k).toLocaleDateString('sk-SK', {weekday:'short'}));
+const fmtDM = k => { const d = pd(k); return d.getDate() + '. ' + (d.getMonth() + 1) + '.'; };
+const fmtDur = m => { const h = Math.floor(m / 60), r = m % 60; if (!h) return r + ' min'; if (!r) return h + ' h'; return h + ' h ' + r + ' min'; };
+const plural = (n, one, few, many) => n === 1 ? one : (n >= 2 && n <= 4 ? few : many);
+const rez = n => n + ' ' + plural(n, 'rezervácia', 'rezervácie', 'rezervácií');
+const overlap = (a, b, c, d) => a < d && c < b;
+
+/* ---------- ukážkové dáta ---------- */
+function defaultWeek(start, end, opts = {}) {
+  return Array.from({length: 7}, (_, i) => ({
+    open: i < 5 || (i === 5 && opts.saturday),
+    start, end: i === 5 ? (opts.satEnd || '13:00') : end,
+    breaks: i < 5 && opts.lunch ? [{start: '12:00', end: '12:30', label: 'Obed'}] : []
+  }));
+}
+function defaultData() {
+  const t = today(), tm = addDays(t, 1);
+  const data = {
+    version: 1,
+    business: {name: 'Salón Lúč'},
+    locations: [
+      {id: 'loc1', name: 'Ružinov', address: 'Ružinovská 12, Bratislava',
+        rooms: [{id: 'r1', name: 'Kreslo 1 – Jana'}, {id: 'r2', name: 'Kreslo 2 – Ivana'}, {id: 'r3', name: 'Kozmetika'}],
+        week: defaultWeek('08:00', '18:00', {saturday: true, lunch: true})},
+      {id: 'loc2', name: 'Staré Mesto', address: 'Obchodná 40, Bratislava',
+        rooms: [{id: 'r4', name: 'Tanečná sála'}],
+        week: defaultWeek('15:00', '21:00')}
+    ],
+    services: [
+      {id: 's1', name: 'Strihanie', description: 'Umytie, strih a fúkaná', duration: 30, buffer: 0, price: 18, color: COLORS[0], capacity: 1, roomIds: ['r1', 'r2']},
+      {id: 's2', name: 'Farbenie', description: 'Farbenie celých vlasov vrátane strihu', duration: 90, buffer: 15, price: 55, color: COLORS[1], capacity: 1, roomIds: ['r1', 'r2']},
+      {id: 's3', name: 'Kozmetické ošetrenie', description: 'Čistenie pleti a maska', duration: 60, buffer: 10, price: 40, color: COLORS[2], capacity: 1, roomIds: ['r3']},
+      {id: 's4', name: 'Lekcia tanca', description: 'Salsa pre začiatočníkov', duration: 90, buffer: 0, price: 12, color: COLORS[3], capacity: 8, roomIds: ['r4']}
+    ],
+    exceptions: [],
+    blocks: [{id: uid(), locationId: 'loc1', roomId: 'r2', date: t, start: '15:30', end: '16:30', label: 'Školenie'}],
+    bookings: [],
+    notifications: [],
+    settings: {
+      slotStep: 15, horizon: 30, minNotice: 60,
+      notify: {instant: true, daily: {on: true, time: '18:00'}, nextDay: {on: true, time: '19:00'}, digest: {on: false, hours: 3}, browser: false},
+      sent: {daily: '', nextDay: '', digestAt: Date.now()}
+    }
+  };
+  const mk = (sid, loc, room, date, start, name, phone, src = 'client') => {
+    const s = data.services.find(x => x.id === sid);
+    data.bookings.push({id: uid(), serviceId: sid, locationId: loc, roomId: room, date, start: t2m(start),
+      duration: s.duration, buffer: s.buffer, customer: {name, phone, email: '', note: ''},
+      status: 'confirmed', createdAt: Date.now() - 3 * 3600e3, source: src});
+  };
+  mk('s1', 'loc1', 'r1', t, '09:00', 'Ivana Kováčová', '+421 905 111 222');
+  mk('s2', 'loc1', 'r2', t, '10:00', 'Jana Horváthová', '+421 907 333 444');
+  mk('s3', 'loc1', 'r3', t, '13:00', 'Mária Nagyová', '+421 910 555 666', 'admin');
+  mk('s1', 'loc1', 'r1', t, '14:30', 'Peter Balog', '+421 915 777 888');
+  mk('s2', 'loc1', 'r1', tm, '09:30', 'Lucia Tóthová', '+421 902 123 456');
+  mk('s1', 'loc1', 'r2', tm, '11:00', 'Tomáš Varga', '+421 903 654 321');
+  mk('s4', 'loc2', 'r4', tm, '17:00', 'Eva Molnárová', '+421 911 000 111');
+  mk('s4', 'loc2', 'r4', tm, '17:00', 'Martin Szabó', '+421 911 000 222');
+  mk('s4', 'loc2', 'r4', tm, '17:00', 'Zuzana Lukáčová', '+421 911 000 333');
+  return data;
+}
+
+/* ---------- Store ---------- */
+function load() {
+  try { const raw = localStorage.getItem(KEY); if (raw) { const d = JSON.parse(raw); if (d && d.version === 1) return d; } } catch (e) {}
+  return defaultData();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} updateBadge(); }
+let db = load(); save();
+
+const svc = id => db.services.find(s => s.id === id);
+const loc = id => db.locations.find(l => l.id === id);
+const active = b => b.status !== 'cancelled';
+function roomById(id) { for (const L of db.locations) { const r = L.rooms.find(x => x.id === id); if (r) return {room: r, location: L}; } return null; }
+function servicesAt(locId) { const L = loc(locId); if (!L) return []; const ids = L.rooms.map(r => r.id); return db.services.filter(s => s.roomIds.some(id => ids.includes(id))); }
+
+/* ---------- dostupnosť ---------- */
+function dayWindow(locId, date) {
+  const L = loc(locId); if (!L) return {open: false};
+  const ex = db.exceptions.find(e => e.locationId === locId && e.date === date);
+  if (ex) {
+    if (ex.type === 'closed') return {open: false, note: ex.note || 'Zatvorené'};
+    return {open: true, start: t2m(ex.start), end: t2m(ex.end), breaks: [], note: ex.note};
+  }
+  const w = L.week[wd(date)];
+  if (!w || !w.open) return {open: false};
+  return {open: true, start: t2m(w.start), end: t2m(w.end), breaks: (w.breaks || []).map(b => ({start: t2m(b.start), end: t2m(b.end), label: b.label}))};
+}
+
+function checkSlot({roomId, locationId, date, start, duration, buffer = 0, serviceId, excludeId}) {
+  const s = svc(serviceId); const cap = s ? (s.capacity || 1) : 1;
+  const end = start + duration;
+  const win = dayWindow(locationId, date);
+  if (!win.open) return {ok: false, reason: 'Prevádzka je v tento deň zatvorená.'};
+  if (start < win.start || end > win.end) return {ok: false, reason: `Mimo pracovného času (${m2t(win.start)}–${m2t(win.end)}).`};
+  for (const b of win.breaks) if (overlap(start, end, b.start, b.end)) return {ok: false, reason: `Prekrýva sa s prestávkou ${b.label || ''} ${m2t(b.start)}–${m2t(b.end)}.`};
+  for (const bl of db.blocks) {
+    if (bl.locationId === locationId && bl.date === date && (!bl.roomId || bl.roomId === roomId) && overlap(start, end, t2m(bl.start), t2m(bl.end)))
+      return {ok: false, reason: `Čas je blokovaný: ${bl.label || 'blok'} ${bl.start}–${bl.end}.`};
+  }
+  let same = 0;
+  for (const b of db.bookings) {
+    if (!active(b) || b.id === excludeId || b.roomId !== roomId || b.date !== date) continue;
+    if (cap > 1 && b.serviceId === serviceId && b.start === start) { same++; continue; }
+    if (overlap(start, end + buffer, b.start, b.start + b.duration + (b.buffer || 0)))
+      return {ok: false, reason: `Kolízia s rezerváciou o ${m2t(b.start)} (${b.customer.name}).`};
+  }
+  if (same >= cap) return {ok: false, reason: 'Kapacita termínu je naplnená.'};
+  return {ok: true, spots: cap - same};
+}
+
+function getSlots(serviceId, locationId, date, roomPref = '') {
+  const s = svc(serviceId), L = loc(locationId);
+  if (!s || !L || date < today()) return [];
+  const win = dayWindow(locationId, date); if (!win.open) return [];
+  const rooms = L.rooms.filter(r => s.roomIds.includes(r.id) && (!roomPref || r.id === roomPref));
+  const step = Number(db.settings.slotStep) || 15;
+  const minStart = date === today() ? nowMin() + (Number(db.settings.minNotice) || 0) : -1;
+  const out = [];
+  for (let t = win.start; t + s.duration <= win.end; t += step) {
+    if (t < minStart) continue;
+    const e = {start: t, rooms: [], spots: 0};
+    for (const r of rooms) {
+      const c = checkSlot({roomId: r.id, locationId, date, start: t, duration: s.duration, buffer: s.buffer, serviceId});
+      if (c.ok) { e.rooms.push(r.id); e.spots += c.spots; }
+    }
+    if (e.rooms.length) out.push(e);
+  }
+  return out;
+}
+
+/* ---------- notifikácie ---------- */
+function bookingLine(b, withDate = true) {
+  const s = svc(b.serviceId), r = roomById(b.roomId);
+  return `${withDate ? fmtDate(b.date) + ' ' : ''}${m2t(b.start)} – ${s ? s.name : 'Služba'}, ${b.customer.name}${r ? ` (${r.location.name}, ${r.room.name})` : ''}`;
+}
+function notify(type, title, body) {
+  db.notifications.unshift({id: uid(), type, title, body, at: Date.now(), read: false});
+  db.notifications = db.notifications.slice(0, 300);
+  save();
+  if (db.settings.notify.browser && 'Notification' in window && Notification.permission === 'granted') {
+    try { new Notification('Reservio: ' + title, {body}); } catch (e) {}
+  }
+  if (route()[0] === 'admin') toast(title);
+}
+function sendDaily() {
+  const t = today();
+  const list = db.bookings.filter(b => dk(new Date(b.createdAt)) === t && b.source === 'client').sort((a, b) => a.createdAt - b.createdAt);
+  db.settings.sent.daily = t;
+  notify('daily', `Súhrn dňa: ${list.length ? 'pribudli ' + rez(list.length) : 'žiadne nové rezervácie'}`,
+    list.length ? list.map(b => bookingLine(b) + (active(b) ? '' : ' – zrušená')).join('\n') : 'Dnes si nikto nový termín nerezervoval.');
+}
+function sendNextDay() {
+  const tm = addDays(today(), 1);
+  const list = db.bookings.filter(b => active(b) && b.date === tm).sort((a, b) => a.start - b.start || a.locationId.localeCompare(b.locationId));
+  db.settings.sent.nextDay = today();
+  notify('nextday', `Zajtra (${fmtDate(tm)}): ${rez(list.length)}`,
+    list.length ? list.map(b => bookingLine(b, false)).join('\n') : 'Na zajtra nie je nikto objednaný.');
+}
+function sendDigest() {
+  const since = db.settings.sent.digestAt || 0;
+  const list = db.bookings.filter(b => b.createdAt > since && b.source === 'client');
+  db.settings.sent.digestAt = Date.now();
+  if (list.length) notify('digest', `Priebežný súhrn: ${rez(list.length)}`, list.map(b => bookingLine(b)).join('\n'));
+  else save();
+}
+function tick() {
+  const n = db.settings.notify, s = db.settings.sent, t = today(), nm = nowMin();
+  if (n.daily.on && s.daily !== t && nm >= t2m(n.daily.time)) sendDaily();
+  if (n.nextDay.on && s.nextDay !== t && nm >= t2m(n.nextDay.time)) sendNextDay();
+  if (n.digest.on && Date.now() - (s.digestAt || 0) >= Number(n.digest.hours) * 3600e3) sendDigest();
+}
+function updateBadge() {
+  const el = $('#navBadge'); if (!el) return;
+  const n = db.notifications.filter(x => !x.read).length;
+  el.hidden = !n; el.textContent = n;
+}
+
+/* ---------- UI utility ---------- */
+function toast(msg, kind = '') {
+  const t = document.createElement('div'); t.className = 'toast ' + kind; t.textContent = msg;
+  $('#toasts').appendChild(t); setTimeout(() => t.remove(), 3200);
+}
+let lastFocus = null;
+function openModal(html, onMount) {
+  lastFocus = document.activeElement;
+  const m = $('#modal');
+  m.innerHTML = `<div class="modal-back" data-close></div><div class="modal-card" role="dialog" aria-modal="true">${html}</div>`;
+  m.hidden = false;
+  $$('[data-close]', m).forEach(el => el.addEventListener('click', closeModal));
+  const card = $('.modal-card', m);
+  if (onMount) onMount(card);
+  const f = $('input:not([type=hidden]),select,textarea', card); if (f) f.focus();
+}
+function closeModal() { const m = $('#modal'); m.hidden = true; m.innerHTML = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
+const opt = (v, label, sel) => `<option value="${esc(v)}" ${sel ? 'selected' : ''}>${esc(label)}</option>`;
+
+/* ---------- router ---------- */
+const app = $('#app');
+function route() { return (location.hash.replace(/^#\/?/, '') || '').split('/'); }
+function render() {
+  const [a, b] = route();
+  $$('.top nav a').forEach(x => x.classList.toggle('on', x.dataset.nav === a));
+  if (a === 'admin') renderAdmin(b || 'kalendar');
+  else if (a === 'rezervacia') renderClient();
+  else renderHome();
+  updateBadge();
+}
+window.addEventListener('hashchange', () => { closeModal(); if (route()[0] === 'rezervacia' && cs.step === 'done') resetClient(); render(); window.scrollTo(0, 0); });
+window.addEventListener('storage', e => { if (e.key === KEY) { db = load(); if ($('#modal').hidden) render(); else updateBadge(); } });
+
+/* ============================================================
+   ÚVOD
+   ============================================================ */
+function renderHome() {
+  const t = today();
+  const list = db.bookings.filter(b => active(b) && b.date === t).sort((a, b) => a.start - b.start);
+  app.innerHTML = `<section class="wrap">
+    <div class="hero">
+      <h1>Termíny bez telefonovania a bez chaosu v kalendári</h1>
+      <p class="lead">Pre kaderníčky, kozmetičky, trénerov aj tanečné školy. Nastavíte služby s dĺžkou trvania, pracovný čas a miestnosti. Klienti vidia iba voľné termíny.</p>
+      <div class="row"><a class="btn primary lg" href="#/admin">Spravovať ako zadávateľ</a><a class="btn lg" href="#/rezervacia">Rezervovať ako klient</a></div>
+    </div>
+    <div class="home-grid">
+      <div class="panel">
+        <h2>Dnes, ${esc(fmtLong(t))}</h2>
+        ${list.length ? `<ul class="agenda">${list.map(b => { const s = svc(b.serviceId), r = roomById(b.roomId); return `<li><span class="tm">${m2t(b.start)}</span><span><span class="sw" style="background:${s ? s.color : '#999'}"></span><b>${esc(s ? s.name : '')}</b> <span class="muted">${fmtDur(b.duration)}</span><br><span class="muted small">${esc(b.customer.name)}${r ? ' · ' + esc(r.location.name) + ', ' + esc(r.room.name) : ''}</span></span></li>`; }).join('')}</ul>`
+          : `<p class="muted">Dnes zatiaľ nikto nie je objednaný.</p>`}
+      </div>
+      <div class="panel">
+        <h2>Ako to funguje</h2>
+        <ol class="facts">
+          <li>Zadávateľ pridá prevádzky, miestnosti a služby, napríklad strihanie na 30 minút a farbenie na 1 h 30 min.</li>
+          <li>Určí pracovný čas, prestávky a dni voľna.</li>
+          <li>Klient si vyberie službu a zobrazia sa mu len termíny, do ktorých sa služba zmestí.</li>
+          <li>Zadávateľ dostane upozornenie a všetko vidí v kalendári podľa miestností.</li>
+        </ol>
+      </div>
+    </div>
+  </section>`;
+}
+
+/* ============================================================
+   KLIENT – rezervácia
+   ============================================================ */
+let cs = {step: 'location', locationId: null, serviceId: null, date: null, start: null, roomPref: '', doneId: null};
+function clientSteps() {
+  const s = [];
+  if (db.locations.length > 1) s.push(['location', 'Prevádzka']);
+  s.push(['service', 'Služba'], ['time', 'Termín'], ['details', 'Vaše údaje']);
+  return s;
+}
+function resetClient() { cs = {step: 'location', locationId: null, serviceId: null, date: null, start: null, roomPref: '', doneId: null}; }
+
+function renderClient() {
+  if (!db.locations.length || !db.services.length) {
+    app.innerHTML = `<section class="wrap"><div class="panel empty"><h2>Rezervácie ešte nie sú spustené</h2><p class="muted">Zadávateľ zatiaľ nepridal prevádzku alebo službu.</p><a class="btn primary" href="#/admin/sluzby">Nastaviť služby</a></div></section>`;
+    return;
+  }
+  if (cs.locationId && !loc(cs.locationId)) resetClient();
+  if (db.locations.length === 1) { cs.locationId = db.locations[0].id; if (cs.step === 'location') cs.step = 'service'; }
+  if (cs.step === 'done') return renderDone();
+
+  const steps = clientSteps();
+  const idx = steps.findIndex(x => x[0] === cs.step);
+  const L = loc(cs.locationId), S = svc(cs.serviceId);
+  const values = {location: L ? L.name : '', service: S ? `${S.name}, ${fmtDur(S.duration)}` : '', time: cs.date && cs.start != null ? `${fmtDate(cs.date)} o ${m2t(cs.start)}` : ''};
+
+  let main = '';
+  if (cs.step === 'location') main = clientLocation();
+  else if (cs.step === 'service') main = clientService();
+  else if (cs.step === 'time') main = clientTime();
+  else main = clientDetails();
+
+  app.innerHTML = `<section class="wrap"><div class="book">
+    <aside>
+      <div class="biz"><b>${esc(db.business.name)}</b><span class="muted small">Online rezervácia</span></div>
+      <ol class="steps">${steps.map(([k, label], i) => `<li class="${i === idx ? 'on' : ''} ${i < idx ? 'past' : ''}"><button type="button" ${i < idx ? `data-go="${k}"` : 'disabled'} ${i === idx ? 'aria-current="step"' : ''}><span class="n">${i + 1}</span><span><span class="sl">${label}</span>${i < idx && values[k] ? `<span class="sv">${esc(values[k])}</span>` : ''}</span></button></li>`).join('')}</ol>
+    </aside>
+    <div>${main}</div>
+  </div></section>`;
+
+  $$('[data-go]').forEach(b => b.onclick = () => { cs.step = b.dataset.go; renderClient(); });
+  $$('[data-loc]').forEach(b => b.onclick = () => { if (cs.locationId !== b.dataset.loc) { cs.serviceId = null; cs.date = null; cs.roomPref = ''; } cs.locationId = b.dataset.loc; cs.step = 'service'; renderClient(); });
+  $$('[data-svc]').forEach(b => b.onclick = () => { if (cs.serviceId !== b.dataset.svc) { cs.date = null; cs.roomPref = ''; } cs.serviceId = b.dataset.svc; cs.start = null; cs.step = 'time'; renderClient(); });
+  $$('[data-day]').forEach(b => b.onclick = () => { cs.date = b.dataset.day; renderClient(); });
+  $$('[data-slot]').forEach(b => b.onclick = () => { cs.start = Number(b.dataset.slot); cs.step = 'details'; renderClient(); });
+  const rp = $('#roomPref'); if (rp) rp.onchange = () => { cs.roomPref = rp.value; renderClient(); };
+  const form = $('#clientForm'); if (form) form.onsubmit = submitClient;
+}
+
+function clientLocation() {
+  return `<h1>Kde sa chcete objednať?</h1><div class="list">${db.locations.map(l => {
+    const n = servicesAt(l.id).length;
+    return `<button class="choice" data-loc="${l.id}"><span class="main"><b>${esc(l.name)}</b><span class="muted small">${esc(l.address || '')}</span></span><span class="meta muted small">${n} ${plural(n, 'služba', 'služby', 'služieb')}</span></button>`;
+  }).join('')}</div>`;
+}
+function clientService() {
+  const list = servicesAt(cs.locationId);
+  if (!list.length) return `<h1>Vyberte službu</h1><div class="panel empty"><p class="muted">V tejto prevádzke zatiaľ nie sú žiadne služby.</p></div>`;
+  return `<h1>Vyberte službu</h1><div class="list">${list.map(s => `
+    <button class="choice" data-svc="${s.id}"><span class="bar" style="background:${s.color}"></span>
+      <span class="main"><b>${esc(s.name)}</b><span class="muted small">${esc(s.description || '')}${s.capacity > 1 ? `${s.description ? ' · ' : ''}skupina do ${s.capacity} osôb` : ''}</span></span>
+      <span class="meta"><b>${fmtDur(s.duration)}</b><span class="muted small">${s.price ? s.price + ' €' : ''}</span></span>
+    </button>`).join('')}</div>`;
+}
+function clientTime() {
+  const S = svc(cs.serviceId), L = loc(cs.locationId);
+  if (!S || !L) { cs.step = 'service'; return clientService(); }
+  const rooms = L.rooms.filter(r => S.roomIds.includes(r.id));
+  const horizon = Number(db.settings.horizon) || 30;
+  const days = [];
+  for (let i = 0; i <= horizon; i++) { const d = addDays(today(), i); days.push({d, n: getSlots(S.id, L.id, d, cs.roomPref).length}); }
+  if (!cs.date || !days.find(x => x.d === cs.date && x.n)) cs.date = (days.find(x => x.n) || {}).d || null;
+  const slots = cs.date ? getSlots(S.id, L.id, cs.date, cs.roomPref) : [];
+  const groups = [['Dopoludnia', 0, 720], ['Popoludní', 720, 1020], ['Večer', 1020, 1440]]
+    .map(([t, a, b]) => [t, slots.filter(s => s.start >= a && s.start < b)]).filter(g => g[1].length);
+
+  return `<h1>Vyberte si termín</h1>
+    <p class="muted">${esc(S.name)} trvá ${fmtDur(S.duration)}. Zobrazujeme len časy, do ktorých sa služba celá zmestí.</p>
+    ${rooms.length > 1 ? `<div class="field" style="max-width:320px;margin-bottom:14px"><label class="lbl" for="roomPref">Miestnosť alebo pracovník</label><select id="roomPref">${opt('', 'Ktokoľvek voľný', !cs.roomPref)}${rooms.map(r => opt(r.id, r.name, cs.roomPref === r.id)).join('')}</select></div>` : ''}
+    ${cs.date ? `<div class="days" role="list">${days.map(x => `<button class="day ${x.d === cs.date ? 'on' : ''}" data-day="${x.d}" ${x.n ? '' : 'disabled'} role="listitem" aria-pressed="${x.d === cs.date}"><small>${fmtDow(x.d)}</small><b>${pd(x.d).getDate()}</b><small>${x.n ? x.n + ' voľných' : 'plno'}</small></button>`).join('')}</div>
+      <h2 style="margin-top:14px">${esc(fmtLong(cs.date))}</h2>
+      ${groups.map(([t, list]) => `<div class="slot-group"><h3>${t}</h3><div class="slots">${list.map(s => `<button class="slot" data-slot="${s.start}">${m2t(s.start)}${S.capacity > 1 ? `<small>voľné ${s.spots}</small>` : ''}</button>`).join('')}</div></div>`).join('')}`
+    : `<div class="panel empty"><h2>Žiadny voľný termín</h2><p class="muted">V najbližších ${horizon} dňoch sa táto služba nedá rezervovať. Skúste inú službu${db.locations.length > 1 ? ' alebo prevádzku' : ''}.</p></div>`}`;
+}
+function clientDetails() {
+  const S = svc(cs.serviceId), L = loc(cs.locationId);
+  if (!S || !L || cs.start == null) { cs.step = 'time'; return clientTime(); }
+  return `<h1>Vaše údaje</h1>
+    <div class="recap"><b>${esc(S.name)}</b> · ${fmtDur(S.duration)}${S.price ? ' · ' + S.price + ' €' : ''}<br>
+      <span class="muted">${esc(fmtLong(cs.date))} o ${m2t(cs.start)}, ${esc(L.name)}</span></div>
+    <form id="clientForm" class="mform panel" novalidate>
+      <div class="grid2">
+        <div class="field"><label class="lbl" for="cName">Meno a priezvisko</label><input id="cName" autocomplete="name" required></div>
+        <div class="field"><label class="lbl" for="cPhone">Telefón</label><input id="cPhone" type="tel" autocomplete="tel" required></div>
+      </div>
+      <div class="field"><label class="lbl" for="cEmail">E-mail (nepovinné)</label><input id="cEmail" type="email" autocomplete="email"></div>
+      <div class="field"><label class="lbl" for="cNote">Poznámka pre ${esc(db.business.name)} (nepovinné)</label><textarea id="cNote"></textarea></div>
+      <p id="cErr" class="check err" hidden></p>
+      <div class="mfoot"><button type="button" class="btn" data-go="time">Zmeniť termín</button><span class="sp"></span><button class="btn primary lg" type="submit">Potvrdiť rezerváciu</button></div>
+    </form>`;
+}
+function submitClient(e) {
+  e.preventDefault();
+  const name = $('#cName').value.trim(), phone = $('#cPhone').value.trim(), err = $('#cErr');
+  if (!name || !phone) { err.hidden = false; err.textContent = 'Vyplňte meno a telefón, aby vás mohli kontaktovať.'; (name ? $('#cPhone') : $('#cName')).focus(); return; }
+  const S = svc(cs.serviceId);
+  const slot = getSlots(cs.serviceId, cs.locationId, cs.date, cs.roomPref).find(s => s.start === cs.start);
+  if (!slot) { toast('Tento termín medzitým obsadili. Vyberte si iný.', 'err'); cs.step = 'time'; cs.start = null; renderClient(); return; }
+  const b = {id: uid(), serviceId: S.id, locationId: cs.locationId, roomId: cs.roomPref || slot.rooms[0], date: cs.date, start: cs.start,
+    duration: S.duration, buffer: S.buffer || 0, customer: {name, phone, email: $('#cEmail').value.trim(), note: $('#cNote').value.trim()},
+    status: 'confirmed', createdAt: Date.now(), source: 'client'};
+  db.bookings.push(b); save();
+  if (db.settings.notify.instant) notify('new', 'Nová rezervácia', bookingLine(b));
+  cs.step = 'done'; cs.doneId = b.id;
+  renderClient(); window.scrollTo(0, 0);
+}
+function icsFor(b) {
+  const s = svc(b.serviceId), r = roomById(b.roomId), d = b.date.replace(/-/g, ''), e = b.start + b.duration;
+  const t = m => pad(Math.floor(m / 60)) + pad(m % 60) + '00';
+  const escI = x => String(x || '').replace(/[,;\\]/g, m => '\\' + m);
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Reservio//SK', 'BEGIN:VEVENT', `UID:${b.id}@reservio`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`, `DTSTART:${d}T${t(b.start)}`, `DTEND:${d}T${t(e)}`,
+    `SUMMARY:${escI((s ? s.name : 'Rezervácia') + ' – ' + db.business.name)}`,
+    `LOCATION:${escI(r ? r.location.name + (r.location.address ? ', ' + r.location.address : '') : '')}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+}
+function renderDone() {
+  const b = db.bookings.find(x => x.id === cs.doneId);
+  if (!b) { resetClient(); return renderClient(); }
+  const s = svc(b.serviceId), r = roomById(b.roomId);
+  app.innerHTML = `<section class="wrap">
+    <h1>Máte rezervované</h1>
+    <p class="muted">${esc(db.business.name)} dostal oznámenie o vašej rezervácii.</p>
+    <div class="ticket">
+      <div class="ticket-main">
+        <h2>${esc(s ? s.name : 'Rezervácia')}</h2>
+        <dl>
+          <dt>Kedy</dt><dd>${esc(fmtLong(b.date))}, ${m2t(b.start)}–${m2t(b.start + b.duration)}</dd>
+          <dt>Kde</dt><dd>${esc(r ? r.location.name : '')}${r && r.location.address ? ', ' + esc(r.location.address) : ''}</dd>
+          ${r && r.location.rooms.length > 1 ? `<dt>Miestnosť</dt><dd>${esc(r.room.name)}</dd>` : ''}
+          <dt>Na meno</dt><dd>${esc(b.customer.name)}</dd>
+          ${s && s.price ? `<dt>Cena</dt><dd>${s.price} €</dd>` : ''}
+        </dl>
+      </div>
+      <div class="ticket-stub"><span class="big">${m2t(b.start)}</span><span class="dt">${fmtDate(b.date)}</span></div>
+    </div>
+    <div class="row">
+      <a class="btn" download="rezervacia.ics" href="data:text/calendar;charset=utf-8,${encodeURIComponent(icsFor(b))}">Pridať do kalendára</a>
+      <button class="btn primary" id="again">Rezervovať ďalší termín</button>
+    </div>
+  </section>`;
+  $('#again').onclick = () => { resetClient(); renderClient(); };
+}
+
+/* ============================================================
+   ZADÁVATEĽ
+   ============================================================ */
+let as = {view: 'day', date: today(), locationId: null};
+let listFilter = {when: 'upcoming', q: ''};
+const TABS = [['kalendar', 'Kalendár'], ['rezervacie', 'Rezervácie'], ['sluzby', 'Služby'], ['cas', 'Pracovný čas'], ['prevadzky', 'Prevádzky a miestnosti'], ['notifikacie', 'Notifikácie']];
+
+function renderAdmin(tab) {
+  if (!loc(as.locationId)) as.locationId = db.locations[0] ? db.locations[0].id : null;
+  const unread = db.notifications.filter(n => !n.read).length;
+  const views = {kalendar: adminCalendar, rezervacie: adminList, sluzby: adminServices, cas: adminHours, prevadzky: adminLocations, notifikacie: adminNotifications};
+  const v = (views[tab] || adminCalendar)();
+  app.innerHTML = `<section class="wrap wide"><div class="admin">
+    <nav class="side" aria-label="Správa">${TABS.map(([k, l]) => `<a href="#/admin/${k}" class="${k === tab ? 'on' : ''}">${l}${k === 'notifikacie' && unread ? `<span class="badge">${unread}</span>` : ''}</a>`).join('')}
+      <div class="side-foot"><button class="btn ghost sm" id="resetDemo">Obnoviť ukážkové dáta</button></div></nav>
+    <div class="admin-main">${v.html}</div>
+  </div></section>`;
+  v.wire && v.wire();
+  $('#resetDemo').onclick = () => { if (confirm('Vymazať všetky zmeny a nahrať ukážkové dáta?')) { db = defaultData(); save(); resetClient(); as.locationId = null; render(); toast('Ukážkové dáta sú obnovené'); } };
+}
+const locSelect = (id = 'locSel') => db.locations.length > 1
+  ? `<select id="${id}" aria-label="Prevádzka">${db.locations.map(l => opt(l.id, l.name, l.id === as.locationId)).join('')}</select>` : '';
+function wireLocSelect(id = 'locSel') { const s = $('#' + id); if (s) s.onchange = () => { as.locationId = s.value; render(); }; }
+
+/* ---------- Kalendár ---------- */
+function weekDates(d) { const s = addDays(d, -wd(d)); return Array.from({length: 7}, (_, i) => addDays(s, i)); }
+function calRange(L, dates) {
+  let mn = 1440, mx = 0;
+  for (const d of dates) { const w = dayWindow(L.id, d); if (w.open) { mn = Math.min(mn, w.start); mx = Math.max(mx, w.end); } }
+  for (const b of db.bookings) if (active(b) && b.locationId === L.id && dates.includes(b.date)) { mn = Math.min(mn, b.start); mx = Math.max(mx, b.start + b.duration); }
+  for (const bl of db.blocks) if (bl.locationId === L.id && dates.includes(bl.date)) { mn = Math.min(mn, t2m(bl.start)); mx = Math.max(mx, t2m(bl.end)); }
+  if (mn >= mx) { mn = 480; mx = 1080; }
+  return [Math.max(0, Math.floor(mn / 60) * 60), Math.min(1440, Math.ceil(mx / 60) * 60)];
+}
+function columnHTML(L, date, rooms, [rs, re]) {
+  const y = m => ((m - rs) * PXM).toFixed(1);
+  const hh = (a, b) => ((b - a) * PXM).toFixed(1);
+  const n = rooms.length;
+  const pos = i => n > 1 ? `left:calc(${(i / n * 100).toFixed(3)}% + 2px);width:calc(${(100 / n).toFixed(3)}% - 4px)` : 'left:4px;right:4px';
+  const w = dayWindow(L.id, date);
+  let h = '';
+  const shade = (a, b, label = '') => { a = Math.max(a, rs); b = Math.min(b, re); return b > a ? `<div class="shade" style="top:${y(a)}px;height:${hh(a, b)}px">${label && b - a >= 20 ? `<span>${esc(label)}</span>` : ''}</div>` : ''; };
+  if (!w.open) h += shade(rs, re, w.note || 'Zatvorené');
+  else { h += shade(rs, w.start); h += shade(w.end, re); w.breaks.forEach(b => h += shade(b.start, b.end, b.label || 'Prestávka')); }
+  db.blocks.filter(bl => bl.locationId === L.id && bl.date === date).forEach(bl => {
+    const i = bl.roomId ? rooms.findIndex(r => r.id === bl.roomId) : -1;
+    if (bl.roomId && i < 0) return;
+    const s = t2m(bl.start), e = t2m(bl.end);
+    h += `<button class="blk" data-block="${bl.id}" style="top:${y(s)}px;height:${hh(s, e)}px;${bl.roomId ? pos(i) : 'left:4px;right:4px'}"><b>${esc(bl.label || 'Blokované')}</b> ${bl.start}–${bl.end}</button>`;
+  });
+  rooms.forEach((r, i) => {
+    const groups = new Map();
+    db.bookings.filter(b => active(b) && b.date === date && b.roomId === r.id).sort((a, b) => a.start - b.start).forEach(b => {
+      const s = svc(b.serviceId); const key = s && s.capacity > 1 ? `g-${b.serviceId}-${b.start}` : b.id;
+      if (!groups.has(key)) groups.set(key, []); groups.get(key).push(b);
+    });
+    groups.forEach(list => {
+      const b = list[0], s = svc(b.serviceId), grp = s && s.capacity > 1;
+      h += `<button class="ev" ${grp ? `data-group="${list.map(x => x.id).join(',')}"` : `data-booking="${b.id}"`} style="top:${y(b.start)}px;height:${Math.max(b.duration * PXM, 24).toFixed(1)}px;${pos(i)};--c:${s ? s.color : '#888'}" title="${esc(bookingLine(b, false))}">
+        <span class="t">${m2t(b.start)} ${esc(s ? s.name : 'Služba')}</span><span class="c">${grp ? `${list.length}/${s.capacity} prihlásených` : esc(b.customer.name)}</span></button>`;
+      if (b.buffer) h += `<div class="buf" style="top:${y(b.start + b.duration)}px;height:${hh(0, b.buffer)}px;${pos(i)}"></div>`;
+    });
+  });
+  if (date === today()) { const nm = nowMin(); if (nm >= rs && nm <= re) h += `<div class="now" style="top:${y(nm)}px"></div>`; }
+  return `<div class="col" data-date="${date}" data-rooms="${rooms.map(r => r.id).join(',')}" style="height:${hh(rs, re)}px;background-size:100% ${60 * PXM}px">${h}</div>`;
+}
+function adminCalendar() {
+  const L = loc(as.locationId);
+  if (!L) return {html: `<div class="panel empty"><h2>Najprv pridajte prevádzku</h2><p class="muted">Kalendár sa zobrazuje pre konkrétnu prevádzku a jej miestnosti.</p><a class="btn primary" href="#/admin/prevadzky">Pridať prevádzku</a></div>`};
+  if (!L.rooms.length) return {html: `<div class="panel empty"><h2>Prevádzka ${esc(L.name)} nemá miestnosti</h2><p class="muted">Pridajte aspoň jednu miestnosť, kreslo alebo pracovníka.</p><a class="btn primary" href="#/admin/prevadzky">Pridať miestnosť</a></div>`};
+  const day = as.view === 'day';
+  const dates = day ? [as.date] : weekDates(as.date);
+  const range = calRange(L, dates);
+  const cols = day ? L.rooms.map(r => ({title: r.name, date: as.date, rooms: [r]}))
+                   : dates.map(d => ({title: fmtDow(d), sub: fmtDM(d), date: d, rooms: L.rooms, today: d === today()}));
+  const colMin = day ? 150 : Math.max(120, L.rooms.length * 56);
+  const count = db.bookings.filter(b => active(b) && b.locationId === L.id && dates.includes(b.date)).length;
+  let hours = ''; for (let m = range[0]; m < range[1]; m += 60) hours += `<span style="top:${((m - range[0]) * PXM).toFixed(1)}px">${m2t(m)}</span>`;
+  const label = day ? fmtLong(as.date) : `${fmtDM(dates[0])} – ${fmtDM(dates[6])}`;
+
+  const html = `
+    <div class="page-head"><h1>Kalendár</h1>
+      <div class="row"><button class="btn" id="addBlock">Blokovať čas</button><button class="btn primary" id="addBooking">Nová rezervácia</button></div></div>
+    <div class="tb">
+      ${locSelect()}
+      <div class="seg" role="group" aria-label="Zobrazenie"><button data-view="day" class="${day ? 'on' : ''}">Deň</button><button data-view="week" class="${day ? '' : 'on'}">Týždeň</button></div>
+      <button class="btn icon" id="prev" aria-label="${day ? 'Predchádzajúci deň' : 'Predchádzajúci týždeň'}">‹</button>
+      <button class="btn" id="todayBtn">Dnes</button>
+      <button class="btn icon" id="next" aria-label="${day ? 'Nasledujúci deň' : 'Nasledujúci týždeň'}">›</button>
+      <input type="date" id="calDate" value="${as.date}" aria-label="Prejsť na dátum">
+    </div>
+    <p class="cal-label"><b>${esc(label)}</b><span class="muted">${db.locations.length === 1 ? esc(L.name) + ', ' : ''}${rez(count)}</span></p>
+    <div class="cal" style="margin-top:10px"><div class="cal-scroll"><div class="cal-grid" style="grid-template-columns:56px repeat(${cols.length},minmax(${colMin}px,1fr))">
+      <div class="ch gh" style="border-left:0"></div>
+      ${cols.map(c => `<div class="ch ${c.today ? 'today' : ''} ${day ? '' : 'go'}" ${day ? '' : `data-goday="${c.date}" role="button" tabindex="0" title="Zobraziť deň"`}><b>${esc(c.title)}</b>${c.sub ? `<span>${c.sub}</span>` : ''}${!day && L.rooms.length > 1 ? `<div class="lanes">${L.rooms.map(r => `<span title="${esc(r.name)}">${esc(r.name)}</span>`).join('')}</div>` : ''}</div>`).join('')}
+      <div class="gutter" style="height:${((range[1] - range[0]) * PXM).toFixed(1)}px">${hours}</div>
+      ${cols.map(c => columnHTML(L, c.date, c.rooms, range)).join('')}
+    </div></div></div>
+    <p class="hint">Kliknutím do prázdneho miesta pridáte rezerváciu alebo blok. Šrafované časti sú mimo pracovného času, prestávky a bloky – klient tam termín nevidí.</p>`;
+
+  const wire = () => {
+    wireLocSelect();
+    $$('[data-view]').forEach(b => b.onclick = () => { as.view = b.dataset.view; render(); });
+    $('#prev').onclick = () => { as.date = addDays(as.date, day ? -1 : -7); render(); };
+    $('#next').onclick = () => { as.date = addDays(as.date, day ? 1 : 7); render(); };
+    $('#todayBtn').onclick = () => { as.date = today(); render(); };
+    $('#calDate').onchange = e => { if (e.target.value) { as.date = e.target.value; render(); } };
+    $('#addBooking').onclick = () => bookingModal({locationId: L.id, date: as.date});
+    $('#addBlock').onclick = () => blockModal({locationId: L.id, date: as.date});
+    $$('[data-goday]').forEach(el => { const go = () => { as.view = 'day'; as.date = el.dataset.goday; render(); }; el.onclick = go; el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
+    $$('[data-booking]').forEach(el => el.onclick = e => { e.stopPropagation(); bookingModal({id: el.dataset.booking}); });
+    $$('[data-group]').forEach(el => el.onclick = e => { e.stopPropagation(); groupModal(el.dataset.group.split(',')); });
+    $$('[data-block]').forEach(el => el.onclick = e => { e.stopPropagation(); blockModal({id: el.dataset.block}); });
+    $$('.col').forEach(col => col.onclick = e => {
+      if (e.target !== col && !e.target.classList.contains('shade')) return;
+      const rect = col.getBoundingClientRect();
+      const step = Number(db.settings.slotStep) || 15;
+      const m = Math.floor(((e.clientY - rect.top) / PXM + range[0]) / step) * step;
+      const ids = col.dataset.rooms.split(',');
+      const roomId = ids[Math.min(ids.length - 1, Math.floor((e.clientX - rect.left) / rect.width * ids.length))];
+      quickAddModal({locationId: L.id, date: col.dataset.date, start: m, roomId});
+    });
+  };
+  return {html, wire};
+}
+
+function quickAddModal(o) {
+  const r = roomById(o.roomId);
+  openModal(`<div class="mhead"><h2>${fmtDate(o.date)}, ${m2t(o.start)}</h2><button class="btn ghost icon" data-close aria-label="Zavrieť">✕</button></div>
+    <p class="muted">${esc(r ? r.location.name + ', ' + r.room.name : '')}</p>
+    <div class="row"><button class="btn primary" id="qaB">Pridať rezerváciu</button><button class="btn" id="qaX">Blokovať čas</button></div>`, card => {
+    $('#qaB', card).onclick = () => bookingModal(o);
+    $('#qaX', card).onclick = () => blockModal({...o, end: o.start + 60});
+  });
+}
+
+function groupModal(ids) {
+  const list = ids.map(id => db.bookings.find(b => b.id === id)).filter(Boolean);
+  if (!list.length) return;
+  const b = list[0], s = svc(b.serviceId), r = roomById(b.roomId);
+  openModal(`<div class="mhead"><h2>${esc(s ? s.name : 'Skupina')}</h2><button class="btn ghost icon" data-close aria-label="Zavrieť">✕</button></div>
+    <p class="muted">${esc(fmtLong(b.date))}, ${m2t(b.start)}–${m2t(b.start + b.duration)} · ${esc(r ? r.room.name : '')} · ${list.length} z ${s ? s.capacity : '?'} miest obsadených</p>
+    <table class="tbl"><tbody>${list.map(x => `<tr class="click" data-edit="${x.id}"><td><b>${esc(x.customer.name)}</b></td><td class="muted">${esc(x.customer.phone)}</td><td style="text-align:right"><span class="btn ghost sm">Upraviť</span></td></tr>`).join('')}</tbody></table>
+    <div class="mfoot"><span class="sp"></span><button class="btn primary" id="gAdd" ${s && list.length >= s.capacity ? 'disabled' : ''}>Pridať účastníka</button></div>`, card => {
+    $$('[data-edit]', card).forEach(tr => tr.onclick = () => bookingModal({id: tr.dataset.edit}));
+    $('#gAdd', card).onclick = () => bookingModal({locationId: b.locationId, roomId: b.roomId, date: b.date, start: b.start, serviceId: b.serviceId});
+  });
+}
+
+function bookingModal(o = {}) {
+  const ex = o.id ? db.bookings.find(b => b.id === o.id) : null;
+  const b = ex ? JSON.parse(JSON.stringify(ex)) : {
+    locationId: o.locationId || (db.locations[0] && db.locations[0].id), roomId: o.roomId || '', serviceId: o.serviceId || '',
+    date: o.date || today(), start: o.start ?? 540, duration: 30, buffer: 0,
+    customer: {name: '', phone: '', email: '', note: ''}, status: 'confirmed'};
+  if (!b.locationId) { toast('Najprv pridajte prevádzku.', 'err'); return; }
+  openModal(`<form id="bf" class="mform" novalidate>
+    <div class="mhead"><h2>${ex ? 'Upraviť rezerváciu' : 'Nová rezervácia'}</h2><button type="button" class="btn ghost icon" data-close aria-label="Zavrieť">✕</button></div>
+    <div class="grid2">
+      <div class="field"><label class="lbl" for="bLoc">Prevádzka</label><select id="bLoc">${db.locations.map(l => opt(l.id, l.name, l.id === b.locationId)).join('')}</select></div>
+      <div class="field"><label class="lbl" for="bRoom">Miestnosť</label><select id="bRoom"></select></div>
+      <div class="field"><label class="lbl" for="bSvc">Služba</label><select id="bSvc"></select></div>
+      <div class="field"><label class="lbl" for="bDur">Trvanie (minúty)</label><input id="bDur" type="number" min="5" step="5" value="${b.duration}"></div>
+      <div class="field"><label class="lbl" for="bDate">Dátum</label><input id="bDate" type="date" value="${b.date}"></div>
+      <div class="field"><label class="lbl" for="bTime">Začiatok</label><input id="bTime" type="time" step="300" value="${m2t(b.start)}"></div>
+      <div class="field"><label class="lbl" for="bName">Meno klienta</label><input id="bName" value="${esc(b.customer.name)}"></div>
+      <div class="field"><label class="lbl" for="bPhone">Telefón</label><input id="bPhone" type="tel" value="${esc(b.customer.phone)}"></div>
+      <div class="field"><label class="lbl" for="bEmail">E-mail</label><input id="bEmail" type="email" value="${esc(b.customer.email)}"></div>
+      ${ex ? `<div class="field"><label class="lbl" for="bStatus">Stav</label><select id="bStatus">${opt('confirmed', 'Potvrdená', b.status === 'confirmed')}${opt('cancelled', 'Zrušená', b.status === 'cancelled')}</select></div>` : ''}
+    </div>
+    <div class="field"><label class="lbl" for="bNote">Poznámka</label><textarea id="bNote">${esc(b.customer.note)}</textarea></div>
+    <p id="bCheck" class="check" aria-live="polite"></p>
+    <label class="chk" id="bForceWrap" hidden><input type="checkbox" id="bForce"> Uložiť aj napriek kolízii</label>
+    <div class="mfoot">${ex ? `<button type="button" class="btn danger" id="bDel">Vymazať</button>` : ''}<span class="sp"></span>
+      <button type="button" class="btn" data-close>Zavrieť</button><button class="btn primary" type="submit">${ex ? 'Uložiť zmeny' : 'Vytvoriť rezerváciu'}</button></div>
+  </form>`, card => {
+    const f = id => $('#' + id, card);
+    const fillRooms = () => { const L = loc(f('bLoc').value); f('bRoom').innerHTML = L.rooms.map(r => opt(r.id, r.name, r.id === b.roomId)).join(''); if (!L.rooms.find(r => r.id === b.roomId) && L.rooms[0]) b.roomId = L.rooms[0].id; };
+    const fillSvcs = () => {
+      const list = servicesAt(f('bLoc').value);
+      f('bSvc').innerHTML = list.map(s => opt(s.id, `${s.name} (${fmtDur(s.duration)})`, s.id === b.serviceId)).join('') || opt('', 'Žiadne služby', true);
+      if (!list.find(s => s.id === b.serviceId)) { b.serviceId = list[0] ? list[0].id : ''; if (!ex && list[0]) f('bDur').value = list[0].duration; }
+      else if (!ex && o.serviceId) f('bDur').value = svc(b.serviceId).duration;
+    };
+    const cand = () => {
+      const s = svc(f('bSvc').value);
+      return {locationId: f('bLoc').value, roomId: f('bRoom').value, serviceId: f('bSvc').value, date: f('bDate').value,
+        start: t2m(f('bTime').value), duration: Math.max(5, Number(f('bDur').value) || 30), buffer: s ? (s.buffer || 0) : 0};
+    };
+    const check = () => {
+      const c = cand(); const el = f('bCheck');
+      if (f('bStatus') && f('bStatus').value === 'cancelled') { el.className = 'check'; el.textContent = 'Zrušená rezervácia neblokuje kalendár.'; f('bForceWrap').hidden = true; return true; }
+      if (!c.date || !f('bTime').value) { el.className = 'check err'; el.textContent = 'Zadajte dátum a čas.'; return false; }
+      const s = svc(c.serviceId);
+      const r = checkSlot({...c, excludeId: ex && ex.id});
+      let msg = r.ok ? `Termín ${m2t(c.start)}–${m2t(c.start + c.duration)} je voľný.` : r.reason;
+      if (r.ok && s && !s.roomIds.includes(c.roomId)) msg += ' Pozor: služba bežne nie je priradená k tejto miestnosti.';
+      el.className = 'check ' + (r.ok ? 'ok' : 'err'); el.textContent = msg;
+      f('bForceWrap').hidden = r.ok;
+      return r.ok;
+    };
+    fillRooms(); fillSvcs();
+    f('bLoc').onchange = () => { fillRooms(); fillSvcs(); check(); };
+    f('bSvc').onchange = () => { const s = svc(f('bSvc').value); if (s) f('bDur').value = s.duration; check(); };
+    ['bRoom', 'bDur', 'bDate', 'bTime', 'bStatus'].forEach(id => { const el = f(id); if (el) { el.oninput = check; el.onchange = check; } });
+    check();
+    if (ex) f('bDel').onclick = () => { if (confirm(`Natrvalo vymazať rezerváciu ${ex.customer.name}?`)) { db.bookings = db.bookings.filter(x => x.id !== ex.id); save(); closeModal(); render(); toast('Rezervácia je vymazaná'); } };
+    f('bf').onsubmit = e => {
+      e.preventDefault();
+      const name = f('bName').value.trim();
+      if (!name) { f('bCheck').className = 'check err'; f('bCheck').textContent = 'Zadajte meno klienta.'; f('bName').focus(); return; }
+      if (!f('bSvc').value) { f('bCheck').className = 'check err'; f('bCheck').textContent = 'V prevádzke nie je žiadna služba. Pridajte ju v časti Služby.'; return; }
+      if (!check() && !f('bForce').checked) { f('bForce').focus(); return; }
+      const data = {...cand(), customer: {name, phone: f('bPhone').value.trim(), email: f('bEmail').value.trim(), note: f('bNote').value.trim()},
+        status: f('bStatus') ? f('bStatus').value : 'confirmed'};
+      if (ex) Object.assign(ex, data);
+      else db.bookings.push({id: uid(), ...data, createdAt: Date.now(), source: 'admin'});
+      save(); closeModal(); render(); toast(ex ? 'Zmeny sú uložené' : 'Rezervácia je vytvorená');
+    };
+  });
+}
+
+function blockModal(o = {}) {
+  const ex = o.id ? db.blocks.find(x => x.id === o.id) : null;
+  const b = ex ? {...ex} : {locationId: o.locationId || (db.locations[0] && db.locations[0].id), roomId: o.roomId || '', date: o.date || today(),
+    start: m2t(o.start ?? 720), end: m2t(Math.min(o.end ?? (o.start ?? 720) + 60, 1439)), label: ''};
+  if (!b.locationId) return;
+  openModal(`<form id="xf" class="mform" novalidate>
+    <div class="mhead"><h2>${ex ? 'Upraviť blok' : 'Blokovať čas'}</h2><button type="button" class="btn ghost icon" data-close aria-label="Zavrieť">✕</button></div>
+    <p class="muted" style="margin:0">V blokovanom čase si klienti nemôžu rezervovať termín. Hodí sa na dovolenku, školenie alebo neplánovanú prestávku.</p>
+    <div class="grid2">
+      <div class="field"><label class="lbl" for="xLoc">Prevádzka</label><select id="xLoc">${db.locations.map(l => opt(l.id, l.name, l.id === b.locationId)).join('')}</select></div>
+      <div class="field"><label class="lbl" for="xRoom">Miestnosť</label><select id="xRoom"></select></div>
+      <div class="field"><label class="lbl" for="xDate">Dátum</label><input id="xDate" type="date" value="${b.date}"></div>
+      <div class="field"><label class="lbl" for="xLabel">Názov</label><input id="xLabel" value="${esc(b.label)}" placeholder="Napríklad Lekár"></div>
+      <div class="field"><label class="lbl" for="xStart">Od</label><input id="xStart" type="time" step="300" value="${b.start}"></div>
+      <div class="field"><label class="lbl" for="xEnd">Do</label><input id="xEnd" type="time" step="300" value="${b.end}"></div>
+    </div>
+    <p id="xErr" class="check err" hidden></p>
+    <div class="mfoot">${ex ? `<button type="button" class="btn danger" id="xDel">Odstrániť blok</button>` : ''}<span class="sp"></span>
+      <button type="button" class="btn" data-close>Zavrieť</button><button class="btn primary" type="submit">${ex ? 'Uložiť zmeny' : 'Blokovať'}</button></div>
+  </form>`, card => {
+    const f = id => $('#' + id, card);
+    const fill = () => { const L = loc(f('xLoc').value); f('xRoom').innerHTML = opt('', 'Celá prevádzka', !b.roomId) + L.rooms.map(r => opt(r.id, r.name, r.id === b.roomId)).join(''); };
+    fill(); f('xLoc').onchange = () => { b.roomId = ''; fill(); };
+    if (ex) f('xDel').onclick = () => { db.blocks = db.blocks.filter(x => x.id !== ex.id); save(); closeModal(); render(); toast('Blok je odstránený'); };
+    f('xf').onsubmit = e => {
+      e.preventDefault();
+      const d = {locationId: f('xLoc').value, roomId: f('xRoom').value || null, date: f('xDate').value, start: f('xStart').value, end: f('xEnd').value, label: f('xLabel').value.trim()};
+      if (!d.date || !d.start || !d.end || t2m(d.end) <= t2m(d.start)) { f('xErr').hidden = false; f('xErr').textContent = 'Koniec bloku musí byť neskôr ako začiatok.'; return; }
+      if (ex) Object.assign(ex, d); else db.blocks.push({id: uid(), ...d});
+      save(); closeModal(); render(); toast(ex ? 'Blok je upravený' : 'Čas je zablokovaný');
+    };
+  });
+}
+
+/* ---------- Zoznam rezervácií ---------- */
+function adminList() {
+  const html = `<div class="page-head"><h1>Rezervácie</h1><button class="btn primary" id="addB">Nová rezervácia</button></div>
+    <div class="tb">
+      <select id="fWhen" aria-label="Filter">${opt('upcoming', 'Nadchádzajúce', listFilter.when === 'upcoming')}${opt('today', 'Dnes', listFilter.when === 'today')}${opt('tomorrow', 'Zajtra', listFilter.when === 'tomorrow')}${opt('past', 'Minulé', listFilter.when === 'past')}${opt('cancelled', 'Zrušené', listFilter.when === 'cancelled')}${opt('all', 'Všetky', listFilter.when === 'all')}</select>
+      <input id="fQ" type="search" placeholder="Hľadať meno alebo telefón" value="${esc(listFilter.q)}" style="max-width:280px">
+    </div>
+    <div class="panel" style="padding:6px 10px"><div class="scroll-x" id="listBox"></div></div>`;
+  const fillList = () => {
+    const t = today(), tm = addDays(t, 1), q = listFilter.q.toLowerCase(), nm = nowMin();
+    let list = db.bookings.filter(b => {
+      const past = b.date < t || (b.date === t && b.start + b.duration < nm);
+      switch (listFilter.when) {
+        case 'upcoming': return active(b) && !past;
+        case 'today': return active(b) && b.date === t;
+        case 'tomorrow': return active(b) && b.date === tm;
+        case 'past': return active(b) && past;
+        case 'cancelled': return !active(b);
+        default: return true;
+      }
+    }).filter(b => !q || (b.customer.name + ' ' + b.customer.phone + ' ' + b.customer.email).toLowerCase().includes(q));
+    list.sort((a, b) => (a.date + m2t(a.start)).localeCompare(b.date + m2t(b.start)));
+    if (listFilter.when === 'past') list.reverse();
+    $('#listBox').innerHTML = list.length ? `<table class="tbl"><thead><tr><th>Termín</th><th>Služba</th><th>Klient</th><th>Miesto</th><th>Stav</th></tr></thead><tbody>${list.map(b => {
+      const s = svc(b.serviceId), r = roomById(b.roomId);
+      return `<tr class="click" data-id="${b.id}" tabindex="0"><td class="tn"><b>${fmtDate(b.date)}</b><br>${m2t(b.start)}–${m2t(b.start + b.duration)}</td>
+        <td><span class="sw" style="background:${s ? s.color : '#999'}"></span>${esc(s ? s.name : '–')}</td>
+        <td>${esc(b.customer.name)}<br><span class="muted small">${esc(b.customer.phone)}</span></td>
+        <td>${r ? esc(r.location.name) + '<br><span class="muted small">' + esc(r.room.name) + '</span>' : '–'}</td>
+        <td>${active(b) ? `<span class="pill ok">Potvrdená</span>` : `<span class="pill no">Zrušená</span>`}${b.source === 'client' ? '<br><span class="muted small">online</span>' : ''}</td></tr>`;
+    }).join('')}</tbody></table>` : `<div class="empty"><p class="muted">Pre tento filter nie sú žiadne rezervácie.</p></div>`;
+    $$('#listBox [data-id]').forEach(tr => { tr.onclick = () => bookingModal({id: tr.dataset.id}); tr.onkeydown = e => { if (e.key === 'Enter') bookingModal({id: tr.dataset.id}); }; });
+  };
+  const wire = () => {
+    fillList();
+    $('#fWhen').onchange = e => { listFilter.when = e.target.value; fillList(); };
+    $('#fQ').oninput = e => { listFilter.q = e.target.value; fillList(); };
+    $('#addB').onclick = () => bookingModal({locationId: as.locationId, date: today()});
+  };
+  return {html, wire};
+}
+
+/* ---------- Služby ---------- */
+function adminServices() {
+  const html = `<div class="page-head"><h1>Služby</h1><button class="btn primary" id="addS">Pridať službu</button></div>
+    <p class="muted">Každá služba má vlastnú dĺžku trvania. Pauza po službe je čas na upratanie alebo prípravu – klient ju nevidí, ale ďalší termín začne až po nej.</p>
+    ${db.services.length ? `<div class="svc-list">${db.services.map(s => {
+      const rooms = s.roomIds.map(id => roomById(id)).filter(Boolean);
+      return `<div class="svc"><span class="bar" style="background:${s.color}"></span>
+        <div><b>${esc(s.name)}</b> <span class="muted">· ${fmtDur(s.duration)}${s.buffer ? ` + ${s.buffer} min pauza` : ''}${s.price ? ` · ${s.price} €` : ''}${s.capacity > 1 ? ` · skupina do ${s.capacity}` : ''}</span><br>
+        <span class="muted small">${rooms.length ? rooms.map(r => esc(r.location.name + ': ' + r.room.name)).join(', ') : '<span style="color:var(--warn)">Nie je priradená k žiadnej miestnosti, klienti ju neuvidia</span>'}</span></div>
+        <button class="btn sm" data-edit="${s.id}">Upraviť</button></div>`;
+    }).join('')}</div>` : `<div class="panel empty"><h2>Zatiaľ žiadne služby</h2><p class="muted">Pridajte prvú službu, napríklad strihanie na 30 minút.</p></div>`}`;
+  const wire = () => {
+    $('#addS').onclick = () => serviceModal();
+    $$('[data-edit]').forEach(b => b.onclick = () => serviceModal(b.dataset.edit));
+  };
+  return {html, wire};
+}
+function serviceModal(id) {
+  const ex = id ? svc(id) : null;
+  const s = ex ? {...ex} : {name: '', description: '', duration: 30, buffer: 0, price: '', capacity: 1, color: COLORS[db.services.length % COLORS.length],
+    roomIds: db.locations.flatMap(l => l.rooms.map(r => r.id))};
+  const chips = [15, 30, 45, 60, 90, 120, 180];
+  openModal(`<form id="sf" class="mform" novalidate>
+    <div class="mhead"><h2>${ex ? 'Upraviť službu' : 'Nová služba'}</h2><button type="button" class="btn ghost icon" data-close aria-label="Zavrieť">✕</button></div>
+    <div class="field"><label class="lbl" for="sName">Názov</label><input id="sName" value="${esc(s.name)}" placeholder="Napríklad Strihanie"></div>
+    <div class="field"><label class="lbl" for="sDesc">Krátky popis pre klienta</label><input id="sDesc" value="${esc(s.description)}"></div>
+    <div class="field"><label class="lbl" for="sDur">Dĺžka trvania (minúty)</label>
+      <div class="row"><input id="sDur" type="number" min="5" step="5" value="${s.duration}" style="width:110px"><div class="chips">${chips.map(c => `<button type="button" class="chip ${c === Number(s.duration) ? 'on' : ''}" data-dur="${c}">${fmtDur(c)}</button>`).join('')}</div></div></div>
+    <div class="grid3">
+      <div class="field"><label class="lbl" for="sBuf">Pauza po službe (min)</label><input id="sBuf" type="number" min="0" step="5" value="${s.buffer}"></div>
+      <div class="field"><label class="lbl" for="sPrice">Cena (€)</label><input id="sPrice" type="number" min="0" step="0.5" value="${s.price}"></div>
+      <div class="field"><label class="lbl" for="sCap">Klientov naraz</label><input id="sCap" type="number" min="1" step="1" value="${s.capacity}"></div>
+    </div>
+    <p class="hint" style="margin:-4px 0 0">Pri počte klientov väčšom ako 1 ide o skupinovú službu, napríklad lekciu tanca. Viac ľudí sa prihlási na rovnaký čas.</p>
+    <fieldset><legend>Farba v kalendári</legend><div class="swatches">${COLORS.map(c => `<label style="background:${c}"><input type="radio" name="sCol" value="${c}" ${c === s.color ? 'checked' : ''} aria-label="Farba ${c}"><span></span></label>`).join('')}</div></fieldset>
+    <fieldset><legend>Kde sa služba poskytuje</legend>
+      ${db.locations.length ? db.locations.map(l => `<div style="margin:6px 0"><b class="small">${esc(l.name)}</b><div class="row" style="margin-top:4px">${l.rooms.map(r => `<label class="chk"><input type="checkbox" name="sRoom" value="${r.id}" ${s.roomIds.includes(r.id) ? 'checked' : ''}> ${esc(r.name)}</label>`).join('') || '<span class="muted small">bez miestností</span>'}</div></div>`).join('') : '<p class="muted small">Najprv pridajte prevádzku.</p>'}
+    </fieldset>
+    <p id="sErr" class="check err" hidden></p>
+    <div class="mfoot">${ex ? `<button type="button" class="btn danger" id="sDel">Odstrániť službu</button>` : ''}<span class="sp"></span>
+      <button type="button" class="btn" data-close>Zavrieť</button><button class="btn primary" type="submit">${ex ? 'Uložiť zmeny' : 'Pridať službu'}</button></div>
+  </form>`, card => {
+    const f = id => $('#' + id, card);
+    $$('[data-dur]', card).forEach(c => c.onclick = () => { f('sDur').value = c.dataset.dur; $$('[data-dur]', card).forEach(x => x.classList.toggle('on', x === c)); });
+    f('sDur').oninput = () => $$('[data-dur]', card).forEach(x => x.classList.toggle('on', x.dataset.dur === f('sDur').value));
+    if (ex) f('sDel').onclick = () => {
+      const n = db.bookings.filter(b => active(b) && b.serviceId === ex.id && b.date >= today()).length;
+      if (!confirm(n ? `Služba má ${rez(n)} v budúcnosti. Rezervácie zostanú v kalendári. Odstrániť službu?` : `Odstrániť službu ${ex.name}?`)) return;
+      db.services = db.services.filter(x => x.id !== ex.id); save(); closeModal(); render(); toast('Služba je odstránená');
+    };
+    f('sf').onsubmit = e => {
+      e.preventDefault();
+      const d = {name: f('sName').value.trim(), description: f('sDesc').value.trim(), duration: Math.round(Number(f('sDur').value)),
+        buffer: Math.max(0, Math.round(Number(f('sBuf').value) || 0)), price: f('sPrice').value === '' ? '' : Number(f('sPrice').value),
+        capacity: Math.max(1, Math.round(Number(f('sCap').value) || 1)), color: ($('input[name=sCol]:checked', card) || {}).value || COLORS[0],
+        roomIds: $$('input[name=sRoom]:checked', card).map(x => x.value)};
+      const err = f('sErr');
+      if (!d.name) { err.hidden = false; err.textContent = 'Zadajte názov služby.'; f('sName').focus(); return; }
+      if (!(d.duration >= 5)) { err.hidden = false; err.textContent = 'Dĺžka trvania musí byť aspoň 5 minút.'; f('sDur').focus(); return; }
+      if (ex) Object.assign(ex, d); else db.services.push({id: uid(), ...d});
+      save(); closeModal(); render();
+      toast(d.roomIds.length ? (ex ? 'Služba je uložená' : 'Služba je pridaná') : 'Služba je uložená, ale bez miestnosti ju klienti neuvidia');
+    };
+  });
+}
+
+/* ---------- Pracovný čas ---------- */
+function adminHours() {
+  const L = loc(as.locationId);
+  if (!L) return {html: `<div class="panel empty"><h2>Najprv pridajte prevádzku</h2><a class="btn primary" href="#/admin/prevadzky">Pridať prevádzku</a></div>`};
+  const st = db.settings;
+  const exs = db.exceptions.filter(e => e.locationId === L.id && e.date >= addDays(today(), -1)).sort((a, b) => a.date.localeCompare(b.date));
+  const html = `<div class="page-head"><h1>Pracovný čas</h1><div class="row">${locSelect()}</div></div>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">Týždenný rozvrh${db.locations.length > 1 ? ' – ' + esc(L.name) : ''}</h2><button class="btn sm" id="copyMon">Skopírovať pondelok na utorok až piatok</button></div>
+      <p class="hint">Zmeny sa ukladajú hneď. Existujúce rezervácie zostanú na svojom mieste.</p>
+      ${L.week.map((w, i) => `<div class="wk-row ${w.open ? '' : 'closed'}" data-day="${i}">
+        <label class="chk"><input type="checkbox" data-f="open" ${w.open ? 'checked' : ''}> <b>${DAYS[i]}</b></label>
+        <div class="times"><input type="time" step="300" data-f="start" value="${w.start}" ${w.open ? '' : 'disabled'} aria-label="${DAYS[i]} od"> – <input type="time" step="300" data-f="end" value="${w.end}" ${w.open ? '' : 'disabled'} aria-label="${DAYS[i]} do"></div>
+        <div class="brks">${w.open ? (w.breaks || []).map((b, j) => `<span class="brk"><input type="time" step="300" data-b="${j}" data-bf="start" value="${b.start}" aria-label="Prestávka od"> – <input type="time" step="300" data-b="${j}" data-bf="end" value="${b.end}" aria-label="Prestávka do"><input type="text" data-b="${j}" data-bf="label" value="${esc(b.label || '')}" placeholder="Obed" aria-label="Názov prestávky"><button type="button" class="btn ghost icon" data-delbreak="${j}" aria-label="Odstrániť prestávku">✕</button></span>`).join('') + `<button type="button" class="btn ghost sm" data-addbreak>+ Prestávka</button>` : '<span class="muted small">Zatvorené</span>'}</div>
+      </div>`).join('')}
+    </div>
+    <div class="panel">
+      <h2>Pravidlá objednávania</h2>
+      <div class="grid3">
+        <div class="field"><label class="lbl" for="stStep">Ponúkať termíny každých</label><select id="stStep">${[5, 10, 15, 20, 30, 60].map(v => opt(v, v + ' min', Number(st.slotStep) === v)).join('')}</select></div>
+        <div class="field"><label class="lbl" for="stHor">Rezervácie dopredu (dni)</label><input id="stHor" type="number" min="1" max="365" value="${st.horizon}"></div>
+        <div class="field"><label class="lbl" for="stMin">Najneskôr pred termínom</label><select id="stMin">${[[0, 'kedykoľvek'], [30, '30 min'], [60, '1 hodinu'], [120, '2 hodiny'], [240, '4 hodiny'], [720, '12 hodín'], [1440, '1 deň']].map(([v, l]) => opt(v, l, Number(st.minNotice) === v)).join('')}</select></div>
+      </div>
+      <p class="hint">Platí pre všetky prevádzky.</p>
+    </div>
+    <div class="panel">
+      <h2>Dni voľna a zmenené hodiny</h2>
+      <p class="hint" style="margin-top:0">Sviatky, dovolenka alebo deň s iným časom. Výnimka prepíše týždenný rozvrh pre daný dátum.</p>
+      <form id="exForm" class="row" style="align-items:flex-end;margin:12px 0">
+        <div class="field"><label class="lbl" for="exDate">Dátum</label><input id="exDate" type="date" value="${today()}" required></div>
+        <div class="field"><label class="lbl" for="exType">Typ</label><select id="exType">${opt('closed', 'Zatvorené', true)}${opt('custom', 'Iné hodiny', false)}</select></div>
+        <div class="field exTimes" hidden><label class="lbl" for="exStart">Od</label><input id="exStart" type="time" value="10:00"></div>
+        <div class="field exTimes" hidden><label class="lbl" for="exEnd">Do</label><input id="exEnd" type="time" value="14:00"></div>
+        <div class="field"><label class="lbl" for="exNote">Poznámka</label><input id="exNote" placeholder="Napríklad Štátny sviatok"></div>
+        <button class="btn primary" type="submit">Pridať výnimku</button>
+      </form>
+      ${exs.length ? `<table class="tbl"><tbody>${exs.map(e => `<tr><td class="tn"><b>${fmtDate(e.date)}</b></td><td>${e.type === 'closed' ? 'Zatvorené' : `${e.start}–${e.end}`}</td><td class="muted">${esc(e.note || '')}</td><td style="text-align:right"><button class="btn ghost sm danger" data-delex="${e.id}">Odstrániť</button></td></tr>`).join('')}</tbody></table>` : '<p class="muted small">Žiadne nadchádzajúce výnimky.</p>'}
+    </div>`;
+  const wire = () => {
+    wireLocSelect();
+    const saved = () => { save(); toast('Uložené'); };
+    $$('.wk-row').forEach(row => {
+      const w = L.week[Number(row.dataset.day)];
+      $$('[data-f]', row).forEach(inp => inp.onchange = () => {
+        if (inp.dataset.f === 'open') { w.open = inp.checked; save(); render(); return; }
+        w[inp.dataset.f] = inp.value;
+        if (t2m(w.end) <= t2m(w.start)) toast('Koniec pracovného času musí byť po začiatku', 'err');
+        saved();
+      });
+      $$('[data-bf]', row).forEach(inp => inp.onchange = () => { w.breaks[Number(inp.dataset.b)][inp.dataset.bf] = inp.value; saved(); });
+      $$('[data-delbreak]', row).forEach(b => b.onclick = () => { w.breaks.splice(Number(b.dataset.delbreak), 1); save(); render(); });
+      const ab = $('[data-addbreak]', row); if (ab) ab.onclick = () => { (w.breaks = w.breaks || []).push({start: '12:00', end: '12:30', label: 'Obed'}); save(); render(); };
+    });
+    $('#copyMon').onclick = () => { for (let i = 1; i < 5; i++) L.week[i] = JSON.parse(JSON.stringify(L.week[0])); save(); render(); toast('Pondelok je skopírovaný na utorok až piatok'); };
+    $('#stStep').onchange = e => { st.slotStep = Number(e.target.value); saved(); };
+    $('#stHor').onchange = e => { st.horizon = Math.max(1, Number(e.target.value) || 30); saved(); };
+    $('#stMin').onchange = e => { st.minNotice = Number(e.target.value); saved(); };
+    $('#exType').onchange = e => $$('.exTimes').forEach(x => x.hidden = e.target.value !== 'custom');
+    $('#exForm').onsubmit = e => {
+      e.preventDefault();
+      const d = {locationId: L.id, date: $('#exDate').value, type: $('#exType').value, start: $('#exStart').value, end: $('#exEnd').value, note: $('#exNote').value.trim()};
+      if (!d.date) return;
+      if (d.type === 'custom' && t2m(d.end) <= t2m(d.start)) { toast('Koniec musí byť po začiatku', 'err'); return; }
+      db.exceptions = db.exceptions.filter(x => !(x.locationId === L.id && x.date === d.date));
+      db.exceptions.push({id: uid(), ...d});
+      const n = db.bookings.filter(b => active(b) && b.locationId === L.id && b.date === d.date).length;
+      save(); render(); toast(n ? `Výnimka je pridaná. V ten deň je ${rez(n)}, skontrolujte kalendár.` : 'Výnimka je pridaná', n ? 'err' : '');
+    };
+    $$('[data-delex]').forEach(b => b.onclick = () => { db.exceptions = db.exceptions.filter(x => x.id !== b.dataset.delex); save(); render(); });
+  };
+  return {html, wire};
+}
+
+/* ---------- Prevádzky a miestnosti ---------- */
+function adminLocations() {
+  const html = `<div class="page-head"><h1>Prevádzky a miestnosti</h1><button class="btn primary" id="addL">Pridať prevádzku</button></div>
+    <div class="panel"><div class="field" style="max-width:420px"><label class="lbl" for="bizName">Názov firmy, ktorý vidia klienti</label><input id="bizName" value="${esc(db.business.name)}"></div></div>
+    ${db.locations.map(l => `<div class="panel loc-card" data-loc="${l.id}">
+      <div class="grid2"><div class="field"><label class="lbl">Názov prevádzky</label><input data-lf="name" value="${esc(l.name)}"></div>
+      <div class="field"><label class="lbl">Adresa</label><input data-lf="address" value="${esc(l.address || '')}"></div></div>
+      <h3 style="margin-top:16px">Miestnosti, kreslá alebo pracovníci</h3>
+      <div class="rooms">${l.rooms.map(r => `<div class="room"><input data-room="${r.id}" value="${esc(r.name)}" aria-label="Názov miestnosti"><button class="btn ghost sm danger" data-delroom="${r.id}">Odstrániť</button></div>`).join('') || '<p class="muted small">Zatiaľ žiadne miestnosti.</p>'}</div>
+      <div class="row"><button class="btn sm" data-addroom>+ Pridať miestnosť</button><span class="sp"></span>${db.locations.length > 1 ? `<button class="btn ghost sm danger" data-delloc>Odstrániť prevádzku</button>` : ''}</div>
+    </div>`).join('')}`;
+  const futureIn = pred => db.bookings.filter(b => active(b) && b.date >= today() && pred(b));
+  const wire = () => {
+    $('#bizName').onchange = e => { db.business.name = e.target.value.trim() || 'Moja firma'; save(); toast('Uložené'); };
+    $('#addL').onclick = () => {
+      const id = uid();
+      db.locations.push({id, name: 'Nová prevádzka', address: '', rooms: [{id: uid(), name: 'Miestnosť 1'}], week: defaultWeek('09:00', '17:00')});
+      save(); render(); toast('Prevádzka je pridaná, nezabudnite k nej priradiť služby');
+    };
+    $$('.loc-card').forEach(card => {
+      const L = loc(card.dataset.loc);
+      $$('[data-lf]', card).forEach(inp => inp.onchange = () => { L[inp.dataset.lf] = inp.value.trim(); save(); toast('Uložené'); });
+      $$('[data-room]', card).forEach(inp => inp.onchange = () => { L.rooms.find(r => r.id === inp.dataset.room).name = inp.value.trim() || 'Miestnosť'; save(); toast('Uložené'); });
+      $('[data-addroom]', card).onclick = () => { L.rooms.push({id: uid(), name: 'Miestnosť ' + (L.rooms.length + 1)}); save(); render(); };
+      $$('[data-delroom]', card).forEach(b => b.onclick = () => {
+        const rid = b.dataset.delroom, list = futureIn(x => x.roomId === rid);
+        if (!confirm(list.length ? `V miestnosti je ${rez(list.length)} v budúcnosti. Tie sa zrušia. Pokračovať?` : 'Odstrániť miestnosť?')) return;
+        list.forEach(x => x.status = 'cancelled');
+        L.rooms = L.rooms.filter(r => r.id !== rid);
+        db.services.forEach(s => s.roomIds = s.roomIds.filter(x => x !== rid));
+        db.blocks = db.blocks.filter(x => x.roomId !== rid);
+        save(); render();
+      });
+      const dl = $('[data-delloc]', card); if (dl) dl.onclick = () => {
+        const list = futureIn(x => x.locationId === L.id);
+        if (!confirm(list.length ? `Prevádzka má ${rez(list.length)} v budúcnosti. Tie sa zrušia. Odstrániť ${L.name}?` : `Odstrániť prevádzku ${L.name}?`)) return;
+        list.forEach(x => x.status = 'cancelled');
+        const ids = L.rooms.map(r => r.id);
+        db.services.forEach(s => s.roomIds = s.roomIds.filter(x => !ids.includes(x)));
+        db.locations = db.locations.filter(x => x.id !== L.id);
+        db.blocks = db.blocks.filter(x => x.locationId !== L.id);
+        db.exceptions = db.exceptions.filter(x => x.locationId !== L.id);
+        save(); render(); toast('Prevádzka je odstránená');
+      };
+    });
+  };
+  return {html, wire};
+}
+
+/* ---------- Notifikácie ---------- */
+function adminNotifications() {
+  const n = db.settings.notify;
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  const html = `<div class="page-head"><h1>Notifikácie</h1></div>
+    <div class="panel">
+      <h2>Kedy vás upozorniť</h2>
+      <div class="set-row"><label class="chk"><input type="checkbox" id="nInstant" ${n.instant ? 'checked' : ''}> Hneď pri každej novej rezervácii</label></div>
+      <div class="set-row"><label class="chk"><input type="checkbox" id="nDigest" ${n.digest.on ? 'checked' : ''}> Priebežný súhrn nových rezervácií každé</label>
+        <select id="nDigestH" aria-label="Interval súhrnu">${[1, 2, 3, 4, 6, 12].map(h => opt(h, h + ' ' + plural(h, 'hodinu', 'hodiny', 'hodín'), Number(n.digest.hours) === h)).join('')}</select></div>
+      <div class="set-row"><label class="chk"><input type="checkbox" id="nDaily" ${n.daily.on ? 'checked' : ''}> Súhrn nových rezervácií na konci dňa o</label><input type="time" id="nDailyT" value="${n.daily.time}" aria-label="Čas súhrnu dňa"></div>
+      <div class="set-row"><label class="chk"><input type="checkbox" id="nNext" ${n.nextDay.on ? 'checked' : ''}> Prehľad objednaných na ďalší deň o</label><input type="time" id="nNextT" value="${n.nextDay.time}" aria-label="Čas prehľadu na zajtra"></div>
+      <div class="set-row"><label class="chk"><input type="checkbox" id="nBrowser" ${n.browser && perm === 'granted' ? 'checked' : ''} ${perm === 'unsupported' || perm === 'denied' ? 'disabled' : ''}> Zobrazovať upozornenia aj v prehliadači</label>
+        <span class="muted small">${perm === 'denied' ? 'Prehliadač upozornenia blokuje. Povoľte ich v nastaveniach stránky.' : perm === 'unsupported' ? 'Tento prehliadač upozornenia nepodporuje.' : ''}</span></div>
+      <div class="row" style="margin-top:12px"><button class="btn sm" id="tDaily">Poslať súhrn dňa teraz</button><button class="btn sm" id="tNext">Poslať prehľad na zajtra teraz</button></div>
+      <p class="hint">Upozornenia sa zobrazujú tu a v prehliadači, keď je aplikácia otvorená. E-mail a SMS pribudnú po napojení servera.</p>
+    </div>
+    <div class="panel">
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">Doručené</h2>${db.notifications.length ? '<button class="btn ghost sm" id="nClear">Vymazať všetky</button>' : ''}</div>
+      ${db.notifications.length ? `<ul class="inbox">${db.notifications.map(x => `<li class="${x.read ? '' : 'unread'}"><span class="dot"></span><div><b>${esc(x.title)}</b> <span class="muted small">${new Date(x.at).toLocaleString('sk-SK', {day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit'})}</span><pre>${esc(x.body)}</pre></div></li>`).join('')}</ul>`
+        : '<p class="muted">Zatiaľ žiadne upozornenia. Keď si klient rezervuje termín, uvidíte ho tu.</p>'}
+    </div>`;
+  const wire = () => {
+    const saved = () => { save(); toast('Uložené'); };
+    $('#nInstant').onchange = e => { n.instant = e.target.checked; saved(); };
+    $('#nDigest').onchange = e => { n.digest.on = e.target.checked; db.settings.sent.digestAt = Date.now(); saved(); };
+    $('#nDigestH').onchange = e => { n.digest.hours = Number(e.target.value); saved(); };
+    $('#nDaily').onchange = e => { n.daily.on = e.target.checked; saved(); };
+    $('#nDailyT').onchange = e => { n.daily.time = e.target.value; if (t2m(e.target.value) > nowMin()) db.settings.sent.daily = ''; saved(); };
+    $('#nNext').onchange = e => { n.nextDay.on = e.target.checked; saved(); };
+    $('#nNextT').onchange = e => { n.nextDay.time = e.target.value; if (t2m(e.target.value) > nowMin()) db.settings.sent.nextDay = ''; saved(); };
+    $('#nBrowser').onchange = async e => {
+      if (e.target.checked && Notification.permission !== 'granted') {
+        const p = await Notification.requestPermission();
+        if (p !== 'granted') { e.target.checked = false; n.browser = false; save(); render(); return; }
+      }
+      n.browser = e.target.checked; saved();
+    };
+    $('#tDaily').onclick = () => { sendDaily(); render(); };
+    $('#tNext').onclick = () => { sendNextDay(); render(); };
+    const c = $('#nClear'); if (c) c.onclick = () => { db.notifications = []; save(); render(); };
+    // označiť ako prečítané po zobrazení
+    if (db.notifications.some(x => !x.read)) { db.notifications.forEach(x => x.read = true); save(); $$('.side .badge').forEach(b => b.remove()); }
+  };
+  return {html, wire};
+}
+
+/* ---------- štart ---------- */
+tick();
+setInterval(tick, 30000);
+render();
+</script>
+</body>
+</html>
